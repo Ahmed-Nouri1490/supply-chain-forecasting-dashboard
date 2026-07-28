@@ -44,8 +44,6 @@ Category_019 seems too disproportionately dominate
 ⬜ General missing-value check (other columns besides Date)
 ⬜ 3-std-dev outlier check (broader pass, beyond just the 23 you already handled)
 ⬜ Aggregate to weekly demand per category → save to data/processed/
-⬜ Load into SQLite + SQL queries
-⬜ Seasonal decomposition / coefficient of variation
 
 
 
@@ -121,12 +119,133 @@ aggregate - combine multiple data into a single summarised value
 Excluded weeks from 2011 and 2017 as this was partial years (85 and 14 category weeks respectively vs 1400 full years) this will help to avoid disorting seasonal decomposition.
 
 
+ - converted into weeks instead of daily data as there is quite alot of noise in daily data that doesnt really reflect real demand signals.So aggregating this into weeks smooths the trend
 
-4. Load into SQLite - via SQLAlchemy and write at least three non trivial SQL queries.
+ - another reason for the conversion was because this matches how supply chain planning actually works 
+
+ ## PHASE 2
+
+
+Python -> SQLAlchemy -> SQLite
+
+SQLite - is the database which we saved as sql/supplychain.db.It understands how to execute SQL queries against it
+
+SQLAlchemy - a python library thats acts as a translator/connector between your python script and some database. 
+
+Python - where you write the actual code, using SQLAlchemy as the bridge
+
+
+ Load into SQLite - via SQLAlchemy and write at least three non trivial SQL queries.
+
+
+- Two tables are in SQLite (1. demand clean (1M+ rows, daily-level,fully cleaned) 2.weekly_demand (7,082 rows, aggregated))
+
+- We calculate a 4 week average as this is roughly a month 
+
+
+ 1. Window function - functions that perform calculations across a set of rows
+
+ 2. A join - next up. Combines information across your tables or categories/warehouses with in one table
+
+ 3. An aggregation - grouping and summarising (e.g. total demand by warehouse, or which categories have the most volatile demand)
+
+
+
+
+
+## PHASE 3 - DEMAND PATTERN ANALYSIS
+Analyse demand patterns - seasonal decompostion per category, cofficient of variation per category
+
+1. Coefficient of variation (CV) per category - measures how erratic each category's weekly demand is.
+    It feeds directly into XYZ segmentation next phase (low CV = 'X'/predictable, high CV = 'Z'/erratic)
+
+
+We can see that Category_019 has the lowest Coefficient of variation of 0.205 despite being having the highest product demand, which means its the most stable/predictable of all 33 categories. So category_19 is a strong canditate for high volume,low safety stock policy later on.
+
+Compare to categories like 017/027/016 will likely need a higher safety stock relative to their volume, precisely because they're so unpredictable.
+
+
+2. Seasonal decomposition - checks whether demand shows repeating yearly or monthly patterns (trend,seasonality, residual noise), using the weekly demand table (essentially is it going up or down)
+
+    Seasonal decomposition is split into three components:
+    1. Trend - the long term direction (is demand increasing or decreasing over next 5 years)
+    2. Seasonal - a repeating pattern at a fixed interval (e.g. is there the same spike at each point of the year)
+    3. Residual - whatsever left over once trend and seasonality are removed.(essentially the "noise")
+
+
+![alt text](image.png)
+
+From the image above we plotted 4 graphs, 1. showing weekly demand 2. Showing the trend 3. Showing the Seasonal changes 4. The residual which is what is left when removing trend and seasonal data
+
+
+1. Weekly Demand - This is the total demand per week across from 2012 - 2016. There is alot of noise going up and down whilst averaging around 1 - 2.5 x10 ^7
+
+2. Trend - Total Demand readily increases from 2012 to around 2015 which there is a peak. Then starts to decline through 2016. 
+
+3. Seasonal - There is a consistent repeating wave pattern throughout the year so there is seasonlity here
+
+4. Resid (Residual) - This is essentially the leftover, there is no visual pattern other than most of the points scattered near the centreline 0. This is a good sign as that means the trend and seasonal graphs capturated all the structured part of the signal.
+
+
+As category 019 has the highest demand (10x the demand of the next category), we want to a seasonal decomposition soley for this category to analyse any trends.
+
+
+
+![alt text](image-1.png)
+
+This graph is essentially identical to the graph before which signify that this pattern is substantially largely driven by category_019
+
+Now also checking another category that had a high coefficient of variance (CV) which is Category_017
+
+![alt text](image-2.png)
+
+Weekly_Demand — first thing to notice: the scale. Category_017 sits in the low thousands (0–4000), versus Category_019's tens of millions. This is a small, low-volume category. The shape also looks spikier and choppier relative to its own scale than Category_019 did.
+
+Trend — Category_017's trend rises from 2012, peaks around 2013–2014 (earlier than Category_019's 2014–2015 peak), then falls but look at the shape: it's a much sharper, narrower peak, and it declines to a much lower level by 2016 than where it started, rather than settling back near its original level. That's a meaningfully different trend shape, not just the same curve at a smaller scale.
+
+Seasonal — the repeating spiky wave is present here too, similar in general character to Category_019's, though given the small scale of this category, some of what "seasonal" is capturing here may really be reflecting its high volatility (consistent with its CV of 2.59) rather than a clean calendar-driven cycle.
+
+Residual — noticeably larger relative to the signal than Category_019's residual was (spikes up to ~2000 against a series that peaks around 4000) — proportionally much noisier. Category_017 is erratic, and this decomposition is showing that erraticism as residual noise the model can't cleanly attribute to trend or season.
+
+
+
+Category_019 (low CV) decomposes cleanly into trend + season with modest residual noise, while Category_017 (high CV) shows a different trend timing/shape and proportionally much larger unexplained residual variation. That's a solid, evidenced justification for why a flat, uniform inventory policy would poorly serve both extremes at once
+
+
+
+
+
+3. Discount/promo effect - not applicable here since has no discound field. This is a limitation as this is a legitmate scope gap.
+
+
+## Phase 3 — Demand Pattern Analysis (COMPLETE)
+
+**Coefficient of variation (CV) per category:**
+- Computed as std(weekly demand) / mean(weekly demand) per Product_Category, using the `weekly_demand` table.
+- Category_019 (the largest category by volume, ~4.2B total demand) has the *lowest* CV of all 33 categories (0.205) — despite dominating volume, its demand is comparatively stable and predictable.
+- Categories such as Category_017, Category_027, and Category_010 show CV > 2 — high-volatility, low-predictability demand.
+- This directly feeds Phase 4's XYZ segmentation (low CV → "X"/predictable, high CV → "Z"/erratic). Confirms CV and total volume are independent axes, not correlated — justifying separate ABC (volume) and XYZ (variability) segmentation rather than one combined score.
+
+**Seasonal decomposition:**
+- Performed using `statsmodels.seasonal_decompose` (additive model, period=52) on aggregate weekly demand (2012–2016).
+- Aggregate demand shows a clear multi-year trend (rising 2012→2015, declining 2015→2016) and a consistent repeating annual seasonal pattern.
+- Category-level check: decomposing Category_019 alone shows a near-identical trend and seasonal shape to the aggregate — confirming this single category, due to its outsized volume share, is the primary driver of the aggregate pattern rather than a broad-based effect across all categories.
+- By contrast, a high-CV category (Category_017) shows a different trend shape (earlier, sharper peak; steeper decline) and proportionally much larger residual noise — demonstrating that demand behaviour is genuinely heterogeneous across categories, and supporting the case for category-specific inventory policies over a flat uniform policy.
+
+**Discount/promo effect — not applicable:**
+- This dataset (Historical Product Demand) has no discount/promotion field, unlike the originally-considered DataCo dataset. Noted here explicitly as a scope limitation rather than silently omitted.
 
 
 
 
 
 
-5. Analyse demand patterns - seasonal decompostion per category, cofficient of variation per category
+
+
+
+
+
+
+
+
+## PHASE 4 - ABC/XYZ segmentation 
