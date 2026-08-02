@@ -239,13 +239,57 @@ Category_019 (low CV) decomposes cleanly into trend + season with modest residua
 
 
 
-
-
-
-
-
-
-
-
-
 ## PHASE 4 - ABC/XYZ segmentation 
+
+From phase 3 gave us two separate lens looking at volume and predictability (CV). This can be used for PHASE 4 to make actual decision framework
+
+1. ABC segmentation - classify each category by value/volume (A = the few categories driving most of the business, C = many low-volume ones )
+
+    The dataset does not follow a clean 80/15/5 curve as Category_19 alones holds 82.6% of the total demand so the standard pareto heustric does not map cleanly onto this data. Therefore I will follow a natural breakpoint approach instead.
+
+
+
+
+### ABC segmentation — cutoffs derived from demand-ratio cliffs, not a fixed percentage
+
+Rather than applying the conventional 80/15/5 Pareto split as a fixed target, ABC boundaries
+were derived from the data itself: consecutive categories (ranked by total demand) were
+compared using a demand ratio (this category's share ÷ next category's share). Two clear
+structural breaks emerged among the top categories by volume:
+
+- Category_019 is 10.4x larger than the next-largest category (Category_006) — justifying
+  a standalone A tier, despite being a single category.
+- Category_030 is 9.2x larger than the next category (Category_026) — marking the natural
+  end of tier B.
+
+All other consecutive-category ratios in the top 25 fell between 1.0–2.9x, i.e. gradual
+decline rather than a genuine cliff — confirming these two points are real structural
+breaks, not noise.
+
+**Result:** A = 1 category (82.6% of demand), B = 6 categories (82.6%→99.5%),
+C = 26 categories (remaining 0.5%). The extreme A-tier concentration (single category,
+>80% of volume) reflects genuine demand concentration in this dataset, not a modelling
+artefact — confirmed by Query 3 (Category_019's total demand) and the CV analysis (same
+category also shows the lowest, most predictable CV of all 33 categories).
+
+
+
+2. XYZ segmentation - classify each category by CV (X = predictable, Z = erratic) 
+
+3. Combine into a 3x3 ABC-XYZ matrix - e.g. "AX" categories (high volume and high predictability)
+
+4. Safety stock formula - calculate a data driven buffer stock level per segment rather than one flat rule for everything 
+
+5. Forecasting - build a simple forecast and compare it against a naive basline
+
+
+
+
+
+
+
+
+## PHASE 5 - Monte Carlo Simulation (Supplier delay/distruption modelling)
+
+
+## PHASE 6 - POWER BI dashboard build 
