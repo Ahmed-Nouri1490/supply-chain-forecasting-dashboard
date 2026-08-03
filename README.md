@@ -272,11 +272,50 @@ C = 26 categories (remaining 0.5%). The extreme A-tier concentration (single cat
 artefact — confirmed by Query 3 (Category_019's total demand) and the CV analysis (same
 category also shows the lowest, most predictable CV of all 33 categories).
 
-
+### XYZ Segmentation
 
 2. XYZ segmentation - classify each category by CV (X = predictable, Z = erratic) 
 
+- This is different from ABC (80/15/5 Convention). The data was far more concentrated so I had to derive cutoffs from actual cliffs. Compared to XYZ is closer to the opposite as CV doesnt show a cliff structure, forcing artificial "cliffs" here would mean picking a boundary in the middle of a smooth, gradual slope 
+
+**Result:** X = 5 categories, Y = 14, Z = 14 — the majority of the product range shows
+moderate-to-high demand volatility.
+
+
+
+### COMBINATION OF ABC-XYZ Segmentation
+
+
+| | X | Y | Z |
+|---|---|---|---|
+| **A** | 1 (Category_019) | 0 | 0 |
+| **B** | 2 | 4 | 0 |
+| **C** | 2 | 10 | 14 |
+
+
+**Key Findings:**
+
+- Category_019 was responsible for 82.6% of the total demand and was also the most predictable category in the dataset (having the lowest coefficient of variation)
+- Therefore the business dominant revenue driver is also its most stable.
+- Conversely, demand volatility is concentrated almost entirely in low-volume (C-tier) categories no B-tier category falls into the erratic Z bucket. This combined view, not visible from ABC or XYZ alone, directly motivates differentiated inventory policy: AX-type categories can run lean safety stock, while the 14 CZ categories need proportionally the largest buffer relative to their size.
+
+
 3. Combine into a 3x3 ABC-XYZ matrix - e.g. "AX" categories (high volume and high predictability)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 4. Safety stock formula - calculate a data driven buffer stock level per segment rather than one flat rule for everything 
 

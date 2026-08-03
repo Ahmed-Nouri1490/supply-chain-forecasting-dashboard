@@ -50,3 +50,43 @@ abc_table["ABC_segment"].value_counts()
 
 
 # %%
+## XYZ Segmentation
+
+# %%
+cv_by_category = (
+    weekly
+    .groupby("Product_Category")["Weekly_Demand"]
+    .agg(["mean", "std"])
+)
+
+cv_by_category.columns = ["mean_demand", "std_demand"]
+cv_by_category["cv"] = cv_by_category["std_demand"] / cv_by_category["mean_demand"]
+cv_by_category = cv_by_category.sort_values("cv")
+cv_by_category
+
+# %%
+cv_by_category["cv"].describe()
+
+# %%
+cv_by_category["cv_diff"] = cv_by_category["cv"].diff()
+cv_by_category.sort_values("cv_diff", ascending=False).head(10)
+# %%
+def classify_xyz(cv):
+    if cv < 0.5:
+        return "X"
+    elif cv < 1.0:
+        return "Y"
+    else:
+        return "Z"
+
+cv_by_category["XYZ_segment"] = cv_by_category["cv"].apply(classify_xyz)
+cv_by_category["XYZ_segment"].value_counts()
+# %%
+
+## Combine ABC and XYZ segments (3 x 3 matrix)
+
+# %%
+segmentation = abc_table[["ABC_segment"]].join(cv_by_category[["cv", "XYZ_segment"]])
+segmentation["ABC_XYZ"] = segmentation["ABC_segment"] + segmentation["XYZ_segment"]
+segmentation["ABC_XYZ"].value_counts()
+# %%
