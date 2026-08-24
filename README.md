@@ -282,7 +282,7 @@ category also shows the lowest, most predictable CV of all 33 categories).
 moderate-to-high demand volatility.
 
 
-
+3. Combine into a 3x3 ABC-XYZ matrix - e.g. "AX" categories (high volume and high predictability)
 ### COMBINATION OF ABC-XYZ Segmentation
 
 
@@ -300,24 +300,43 @@ moderate-to-high demand volatility.
 - Conversely, demand volatility is concentrated almost entirely in low-volume (C-tier) categories no B-tier category falls into the erratic Z bucket. This combined view, not visible from ABC or XYZ alone, directly motivates differentiated inventory policy: AX-type categories can run lean safety stock, while the 14 CZ categories need proportionally the largest buffer relative to their size.
 
 
-3. Combine into a 3x3 ABC-XYZ matrix - e.g. "AX" categories (high volume and high predictability)
-
-
-
-
-
-
-
-
-
-
-
 
 
 
 
 
 4. Safety stock formula - calculate a data driven buffer stock level per segment rather than one flat rule for everything 
+
+Concept explained - Safety stock is a buffer held in addition to avearge demand, sized to absorb demand uncertainty during the time it takes to replenish stock (lead time)
+
+LEAD TIME - Time between placing the reorder and that replenishment stock arriving. (Logistics/Supplier characteristic)
+
+Formula:
+
+Safety Stock = Z × σ(demand) × √(lead time)
+
+Z = a "service level" factor — how much buffer you want, expressed as a probability of not stocking out (e.g. 95% service level → Z ≈ 1.65). Higher Z = more buffer = lower stockout risk = higher holding cost. (essentially how much stockout risk you are willing to accept for that segment)
+
+σ(demand) = standard deviation of weekly demand — you already have this, it's std_demand in your CV table.
+
+√(lead time) = accounts for the fact that uncertainty compounds over a longer replenishment window.
+
+
+Z should vary by segment (e.g. your one AX category (high volume, highly predictable, and per Query 2, carries real single-warehouse concentration risk) might reasonably get a higher service level target than a CZ category, since a stockout there is more costly to the business.)
+
+I think it makes more sense to accept the volatility and low volume together, as the majority of the revenue was from cat_019, not from the low category, so having a high safety stock for those categories will be a waste of money
+
+
+
+
+
+
+
+
+
+
+
+
 
 5. Forecasting - build a simple forecast and compare it against a naive basline
 
@@ -329,6 +348,11 @@ moderate-to-high demand volatility.
 
 
 ## PHASE 5 - Monte Carlo Simulation (Supplier delay/distruption modelling)
+
+
+
+
+
 
 
 ## PHASE 6 - POWER BI dashboard build 

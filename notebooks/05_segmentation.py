@@ -90,3 +90,10 @@ segmentation = abc_table[["ABC_segment"]].join(cv_by_category[["cv", "XYZ_segmen
 segmentation["ABC_XYZ"] = segmentation["ABC_segment"] + segmentation["XYZ_segment"]
 segmentation["ABC_XYZ"].value_counts()
 # %%
+
+## Save the segmentation results
+# %%
+output_path = project_root / "data" / "processed" / "segmentation.csv"
+segmentation.to_csv(output_path)
+print(f"Saved to {output_path}")
+# %%
