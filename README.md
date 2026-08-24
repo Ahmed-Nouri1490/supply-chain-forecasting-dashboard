@@ -241,6 +241,8 @@ Category_019 (low CV) decomposes cleanly into trend + season with modest residua
 
 ## PHASE 4 - ABC/XYZ segmentation 
 
+ABC segmentation here uses order volume (units) as the value proxy, since no price/cost field exists in this dataset. This is a simplification of standard value-based ABC analysis (which typically uses revenue = volume × unit price); the relative ranking of categories may differ if true monetary value were available.
+
 From phase 3 gave us two separate lens looking at volume and predictability (CV). This can be used for PHASE 4 to make actual decision framework
 
 1. ABC segmentation - classify each category by value/volume (A = the few categories driving most of the business, C = many low-volume ones )
@@ -325,6 +327,73 @@ Z = a "service level" factor — how much buffer you want, expressed as a probab
 Z should vary by segment (e.g. your one AX category (high volume, highly predictable, and per Query 2, carries real single-warehouse concentration risk) might reasonably get a higher service level target than a CZ category, since a stockout there is more costly to the business.)
 
 I think it makes more sense to accept the volatility and low volume together, as the majority of the revenue was from cat_019, not from the low category, so having a high safety stock for those categories will be a waste of money
+
+
+
+The values of Z numbers come from the standard normal distribution.
+
+SERVICE LEVEL EXPLAINED:
+it's not "keep 85% of something in stock" — it's "accept that this category will stock out in roughly 1 out of every ~7 lead-time cycles (15% of the time), because that's a cheap trade-off given how small and unpredictable this category is; but for Category_019, only accept a stockout in roughly 1 out of every 50 cycles (2%), because that one actually matters."
+
+
+
+REORDER POINT
+Reorder Point = expected demand during lead time + safety stock
+It's the trigger level — the moment your stock on hand drops to this number, you place a new order, and the two components together mean you're covered both for the expected sales during the wait (the demand × lead time part) and for unexpected spikes above that average (the safety stock part, scaled by how much stockout risk you decided was acceptable for that segment).
+
+Safety stock only protects against normal, expect everyday demand thats captured by the standard deviation of demand. This doesnt protect from genuine abnormal shock like major supplier collapse or a huge unexpected bulk order or a black swan event. This will be cover in phase 5 of the Monte Carlo simulation.
+
+
+
+## SUMMARY OF PHASE 4
+
+### Safety stock & reorder point
+
+**Formula:** Safety Stock = Z × σ(weekly demand) × √(lead time in weeks)
+Reorder Point = (mean weekly demand × lead time in weeks) + safety stock
+
+**Lead time:** No lead-time field exists in this dataset. A fixed assumption of 37.5 days
+(5.36 weeks) was used — the midpoint of a ~30–45 day range, grounded in the dataset's
+ocean freight documentation. Applied uniformly across all categories, since lead time is
+a logistics/supplier characteristic, not a policy lever the business controls per category.
+
+**Service level (Z) — differentiated by ABC×XYZ segment, not a single flat rule:**
+
+| Segment | Service level | Z |
+|---|---|---|
+| AX | 98% | 2.05 |
+| BX | 95% | 1.65 |
+| BY | 93% | 1.48 |
+| CX | 92% | 1.41 |
+| CY | 88% | 1.18 |
+| CZ | 85% | 1.04 |
+
+**Rationale:** service level (and therefore Z) was deliberately set *lower* for volatile,
+low-volume segments (CZ) rather than higher. Volatility is already captured mathematically
+by σ in the formula — a Z-tier category receives a larger safety stock even at a lower Z,
+simply because its demand is more erratic. Setting Z itself is a separate business-policy
+decision: given Category_019 (the sole AX category) drives 82.6% of total demand, stock
+investment is deliberately concentrated on protecting that category and other higher-tier
+segments, while accepting more frequent (but low-cost) stockouts on the 14 CZ categories,
+whose individual contribution to total demand is negligible. This reflects the project's
+core thesis — differentiated, cost-conscious policy beats a single uniform rule.
+
+**Key finding:** despite the lower Z, safety stock as a *proportion of a category's own
+average demand* is still consistently higher for CZ categories than for AX/BX — e.g.
+Category_017 (CZ) carries safety stock equal to roughly 6x its average weekly demand,
+versus Category_019 (AX) at roughly 1x. This confirms the policy is working as intended:
+in absolute terms, stock investment concentrates on the categories that matter most to
+the business (Category_019 alone holds ~15.6M units of safety stock); in relative terms,
+the formula still honestly reflects how much harder erratic categories are to protect,
+even when the business has chosen to accept more risk on them.
+
+**Note on ABC methodology:** ABC segmentation here uses order volume (units), not revenue,
+since no price/cost field exists in this dataset. This is a simplification of standard
+value-based ABC analysis; true monetary-value rankings may differ from the volume-based
+rankings used throughout this project.
+
+
+
 
 
 

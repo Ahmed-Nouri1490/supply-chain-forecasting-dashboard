@@ -29,7 +29,7 @@ demand_stats.columns = ["mean_demand", "std_demand"]
 segmentation = segmentation.join(demand_stats)
 segmentation.head()
 # %%
-# %%
+# %% ## AX = 0.98 , BX = 0.95, BY = 0.93, CX = 0.92, CY = 0.88, CZ = 0.85
 z_lookup = {
     "AX": 2.05,
     "BX": 1.65,
@@ -51,3 +51,13 @@ segmentation["safety_stock"] = (
 )
 
 segmentation[["ABC_XYZ", "mean_demand", "std_demand", "Z", "safety_stock"]].sort_values("ABC_XYZ")
+
+
+#REORDER POINT CALCULATION
+# %%
+segmentation["reorder_point"] = (
+    segmentation["mean_demand"] * lead_time_weeks + segmentation["safety_stock"]
+)
+
+segmentation[["ABC_XYZ", "mean_demand", "safety_stock", "reorder_point"]].sort_values("ABC_XYZ")
+# %%
