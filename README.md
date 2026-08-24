@@ -142,7 +142,6 @@ Python - where you write the actual code, using SQLAlchemy as the bridge
 
 - We calculate a 4 week average as this is roughly a month 
 
-
  1. Window function - functions that perform calculations across a set of rows
 
  2. A join - next up. Combines information across your tables or categories/warehouses with in one table
@@ -402,12 +401,77 @@ rankings used throughout this project.
 
 
 
-
-
-
-
-
 5. Forecasting - build a simple forecast and compare it against a naive basline
+
+The split the dataset timeline into two separate sections:
+
+1. train (2012 - 2015, 209 weeks) to build forecast from
+2. test (all of 2016, 52 weeks) (so we can see how well our forecast has predicted this as this is unseen data to judge the forecast fairly)
+
+naive_forecast - for each week in 2016, this says "predict the same number as exactly one year earlier" No modelling just a placeholder guess to serve as your baseline (this is a basic prediction where we are predicting 2016 to look like 2015)
+
+MAE (Mean Absolute Error) - MAE does not tell you whether you over- or under-forecasted. As this has abs it strips away direction so just has magnitude of how far away you predicted. 
+
+MAE Naive_forecast - 3,519,694 (essentially a benchmark on how bad a zero-effort guess is)
+
+NEXT I WILL BUILD A BRAND-NEW FORECAST - HOLT-WINTERS that uses a trend and seasonality. (completely new set of predictions and compare the MAE results to the naive)
+
+HOLT-WINTERS (also know as triple exponential smoothing) is a forecasting method that explicity models three things at once - level(current baseline amount), trend (is it rising or falling), and seasonal (repeating yearly pattern). It uses the training data to learn how strong each of those three effects is, then projects all three forward together to generate the forecast.
+
+
+
+![alt text](image.png)
+
+
+### Forecasting vs. naive baseline
+
+**Approach:** aggregate weekly demand (2012–2016) split chronologically — 209 weeks
+training (2012–2015), 52 weeks held out as test (all of 2016). Two forecasts compared
+on the same unseen test period.
+
+**Naive baseline:** predicts each week of 2016 will equal actual demand from the same
+week one year prior (52-week shift). MAE: 3,519,694 units.
+
+**Holt-Winters (triple exponential smoothing):** additive trend + additive seasonal
+(seasonal_periods=52), fit on training data only. Additive was chosen based on the
+Phase 3 seasonal decomposition — the seasonal component showed roughly constant
+absolute swing size across 2012–2016, despite the underlying trend rising and falling
+substantially over the same period, indicating swings don't scale proportionally with
+the demand level. MAE: 2,933,655 units — a 16.7% reduction in forecast error versus
+the naive baseline.
+
+**Interpretation:** the improvement confirms the trend and seasonality identified in
+Phase 3 are genuine, exploitable patterns — a model built to use them meaningfully
+outperforms a method that ignores them. The improvement is real but moderate: plotting
+actual vs. both forecasts shows most week-to-week volatility remains unexplained by
+either method, consistent with the substantial residual noise already observed in the
+Phase 3 decomposition. This is expected — that residual represents demand variation
+with no repeating structure to model, not a shortcoming of the forecasting method.
+
+**Scope note:** forecasting was performed at the aggregate (all-category) level, not
+per category, to keep this phase's scope manageable. Category-level forecasting —
+particularly for the low-volume, high-CV categories identified in Phase 4's XYZ
+segmentation — is a natural extension if time allows.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -93,3 +93,4 @@ category_summary = pd.read_sql(query_agg, engine)
 category_summary.head(10)
 
 ## Ranks all product categories by total demand, from highest to lowest.
+# %%
