@@ -459,28 +459,84 @@ segmentation — is a natural extension if time allows.
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ## PHASE 5 - Monte Carlo Simulation (Supplier delay/distruption modelling)
+
+PHASE 5 is split into three pieces:
+
+
+### Design decision: bootstrap resampling over parametric (Normal) simulation
+
+1. Demand-during-lead-time generator - how we simulate what demand actually looks a ~5.36-week window, per category
+
+To simulate demand during the ~5.36-week lead time, two methods were considered:
+
+- **Parametric:** assume weekly demand is Normally distributed (mean, std from
+  historical data), then use the property that summing L Normal weeks gives
+  Normal(mean × L, std × √L). This is mathematically what underpins the Phase 4
+  Z-score safety stock formula.
+- **Bootstrap resampling (chosen):** randomly sample actual historical weekly
+  demand values (with replacement) for each week in the lead-time window, sum
+  them into one lead-time-demand total, and repeat thousands of times to build
+  an empirical distribution.
+
+**Rationale:** Phase 1's outlier check flagged ≥1 outlier row in 92% of products,
+concluded to reflect genuine demand variability (bulk orders, spikes) rather than
+data quality issues. A Normal-distribution assumption would smooth that skew away.
+Bootstrap resamples real historical values directly, preserving it — consistent
+with the Phase 1 finding rather than an independent claim of higher accuracy.
+
+**Trade-off:** bootstrap treats each sampled week as independent, so it won't
+capture any seasonality that happens to fall within a specific lead-time window.
+Noted here as a known limitation, not a blocker.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### Design decision: disruption model assumptions
+
+2. Disruption model - how we simulate the supplier sometimes taking longer than 5.36 weeks (the scenario where something goes wrong - a shipment delay, a customs hold, a factory issue)
+
+
+No disruption/delay field exists in the dataset, so this stage uses documented
+judgement-call assumptions rather than data-derived values (same approach as
+the 37.5-day lead time assumption in Phase 4):
+
+- **20% probability** a given lead-time cycle experiences a disruption
+- **When disrupted**, the extra delay is drawn from an **exponential
+  distribution with a mean of 2 extra weeks** — chosen over a uniform delay
+  because real-world disruptions tend to be right-skewed (most delays short,
+  a few severe), which an exponential distribution captures naturally.
+  Not validated against real disruption data; a reasonable modelling choice,
+  not an evidenced one.
+
+
+
+
+
+
+
+
+3. Replication loop + policy comparison - run both pieces thousands of times per category, under both segmented policy and a flat policy, and compare stockout rates vs. holding cost
+
+
+
+
+
+
+
 
 
 
