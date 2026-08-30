@@ -153,6 +153,10 @@ Python - where you write the actual code, using SQLAlchemy as the bridge
 
 
 ## PHASE 3 - DEMAND PATTERN ANALYSIS
+- helps figure out the reorder point(expected demand during lead time(how much will be sold while you wait for the next delivery))
+-  
+
+
 Analyse demand patterns - seasonal decompostion per category, cofficient of variation per category
 
 1. Coefficient of variation (CV) per category - measures how erratic each category's weekly demand is.
@@ -461,6 +465,21 @@ segmentation — is a natural extension if time allows.
 
 ## PHASE 5 - Monte Carlo Simulation (Supplier delay/distruption modelling)
 
+### Design decision: reorder point uses historical mean, not per-category Holt-Winters
+
+Phase 4's Holt-Winters model was fitted on **aggregate** demand (summed across
+all 33 categories) to validate the forecasting methodology itself, and beat a
+seasonal naive baseline by 16.7% MAE (2,933,655 vs 3,519,694).
+
+Per-category reorder points (Phase 4/5) use each category's **historical mean
+weekly demand**, not an individual Holt-Winters forecast. Extending Holt-Winters
+to all 33 categories individually was considered but scoped out: several
+low-volume "C"-tier categories (26 of 33) have thin, sparse weekly data, which
+risks unstable seasonal parameter estimates without individual model
+validation — a level of per-category diagnostic checking not feasible given
+project timeline. This is a deliberate scope decision, documented here rather
+than silently left unaddressed; a natural extension for future iteration.
+
 PHASE 5 is split into three pieces:
 
 
@@ -494,17 +513,6 @@ Noted here as a known limitation, not a blocker.
 
 
 
-
-
-
-
-
-
-
-
-
-
-
 ### Design decision: disruption model assumptions
 
 2. Disruption model - how we simulate the supplier sometimes taking longer than 5.36 weeks (the scenario where something goes wrong - a shipment delay, a customs hold, a factory issue)
@@ -525,11 +533,9 @@ the 37.5-day lead time assumption in Phase 4):
 
 
 
-
-
-
-
 3. Replication loop + policy comparison - run both pieces thousands of times per category, under both segmented policy and a flat policy, and compare stockout rates vs. holding cost
+
+
 
 
 
