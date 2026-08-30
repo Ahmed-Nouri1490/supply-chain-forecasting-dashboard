@@ -1,6 +1,12 @@
 
 #%%
 import numpy as np
+# %%
+segmentation = pd.read_csv(
+    project_root / "data" / "processed" / "segmentation_with_policy.csv",
+    index_col="Product_Category"
+)
+segmentation.head()
 
 def simulate_lead_time_demand(weekly_demand_values, lead_time_weeks, n_simulations=10000):
     """
@@ -86,4 +92,52 @@ avg_delay_when_disrupted = disruption_test[disruption_test > 0].mean()
 
 print(f"% of trials disrupted: {pct_disrupted:.1f}%  (expect ~20%)")
 print(f"Avg delay when disrupted: {avg_delay_when_disrupted:.2f} weeks  (expect ~2.0)")
+# %%
+
+## REPLICATION LOOP
+
+# %%
+def run_monte_carlo_for_category(weekly_demand_values, base_lead_time_weeks,
+                                   reorder_point, flat_reorder_point,
+                                   n_simulations=10000, disruption_prob=0.2, mean_extra_delay=2):
+    """
+    Run the combined Monte Carlo simulation for one category.
+    Returns the stockout rate under the segmented policy and the flat policy.
+    """
+    extra_delays = simulate_disruption(n_simulations, disruption_prob, mean_extra_delay)
+
+    demand_samples = np.zeros(n_simulations)  # empty array to fill in, one value per trial
+
+    for i in range(n_simulations):
+        # --- BLANK 1 ---
+        # This trial's actual lead time = base lead time + this trial's extra delay
+        actual_lead_time = base_lead_time_weeks + extra_delays[i]
+
+        # --- BLANK 2 ---
+        # Call simulate_lead_time_demand for JUST this trial (n_simulations=1),
+        # using actual_lead_time. The function returns an array of 1 value —
+        # use [0] to pull that single number out.
+        demand_samples[i] = simulate_lead_time_demand(weekly_demand_values, actual_lead_time, n_simulations=1)[0]
+
+    # Compare simulated demand against each policy's reorder point
+    stockout_rate_segmented = (demand_samples > reorder_point).mean()
+    stockout_rate_flat = (demand_samples > flat_reorder_point).mean()
+
+    return stockout_rate_segmented, stockout_rate_flat
+
+
+# %%
+test_row = segmentation.loc["Category_019"]
+
+stockout_seg, stockout_flat = run_monte_carlo_for_category(
+    weekly_demand_values=test_values,  # from your earlier sanity check, Category_019's weekly demand
+    base_lead_time_weeks=5.36,
+    reorder_point=test_row["reorder_point"],
+    flat_reorder_point=test_row["flat_reorder_point"],
+)
+
+print(f"Segmented policy stockout rate: {stockout_seg:.2%}")
+print(f"Flat policy stockout rate: {stockout_flat:.2%}")
+
+
 # %%

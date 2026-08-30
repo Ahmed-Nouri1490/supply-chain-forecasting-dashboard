@@ -465,6 +465,17 @@ segmentation — is a natural extension if time allows.
 
 ## PHASE 5 - Monte Carlo Simulation (Supplier delay/distruption modelling)
 
+Monte carlo - is a strategy where answering questions that are too complex to solve with a clean formula will instead use a simulation with random inputs and repeat it thousands of times and look at the spread of outcomes
+
+for example in this example - "Given randomness in both demand AND lead time, how often would our stock run out?"
+
+How your three parts map onto this
+One Monte Carlo trial = one imagined version of "a single time you had to reorder stock." It's not real — it's one hypothetical draw from everything that could happen.
+Part 1 (bootstrap) generates the demand piece of that hypothetical
+Part 2 (disruption) generates the lead-time piece of that hypothetical
+Part 3 (replication loop) is literally the "repeat thousands of times" step — running one full simulated trial (disruption → demand → stockout check) 10,000 times per category, then counting up what fraction of those trials ended in a stockout
+
+
 ### Design decision: reorder point uses historical mean, not per-category Holt-Winters
 
 Phase 4's Holt-Winters model was fitted on **aggregate** demand (summed across

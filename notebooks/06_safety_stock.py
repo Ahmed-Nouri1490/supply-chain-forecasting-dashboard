@@ -55,9 +55,25 @@ segmentation[["ABC_XYZ", "mean_demand", "std_demand", "Z", "safety_stock"]].sort
 
 #REORDER POINT CALCULATION
 # %%
+# %%
+FLAT_Z = 1.65  # uniform ~95% service level, applied to every category regardless of segment
+
+segmentation["flat_safety_stock"] = (
+    FLAT_Z * segmentation["std_demand"] * (lead_time_weeks ** 0.5)
+)
+
+segmentation["flat_reorder_point"] = (
+    segmentation["mean_demand"] * lead_time_weeks + segmentation["flat_safety_stock"]
+)
+
+segmentation[["ABC_XYZ", "reorder_point", "flat_reorder_point"]].sort_values("ABC_XYZ")
 segmentation["reorder_point"] = (
     segmentation["mean_demand"] * lead_time_weeks + segmentation["safety_stock"]
 )
 
 segmentation[["ABC_XYZ", "mean_demand", "safety_stock", "reorder_point"]].sort_values("ABC_XYZ")
+# %%
+# %%
+segmentation.to_csv(project_root / "data" / "processed" / "segmentation_with_policy.csv")
+print(f"Saved {len(segmentation)} rows")
 # %%
