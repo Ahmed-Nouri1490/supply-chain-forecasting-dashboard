@@ -141,3 +141,65 @@ print(f"Flat policy stockout rate: {stockout_flat:.2%}")
 
 
 # %%
+# %%
+all_categories = segmentation.index  # the 33 category names
+
+results = []
+
+for category in all_categories:
+    # --- BLANK 1 ---
+    # Get this category's historical weekly demand values from df_weekly.
+    # Same pattern as test_values earlier, but using `category` instead of a hardcoded name.
+    category_weekly_values = df_weekly[df_weekly['Product_Category'] == category]['Weekly_Demand'].values
+
+    # --- BLANK 2 ---
+    # Get this category's row from segmentation (same pattern as test_row).
+    category_row = segmentation.loc[category]
+
+    stockout_seg, stockout_flat = run_monte_carlo_for_category(
+        weekly_demand_values=category_weekly_values,
+        base_lead_time_weeks=5.36,
+        reorder_point=category_row["reorder_point"],
+        flat_reorder_point=category_row["flat_reorder_point"],
+    )
+
+    results.append({
+        "Product_Category": category,
+        "ABC_XYZ": category_row["ABC_XYZ"],
+        "stockout_rate_segmented": stockout_seg,
+        "stockout_rate_flat": stockout_flat,
+    })
+
+results_df = pd.DataFrame(results)
+results_df.sort_values("ABC_XYZ")
+# %%
+# TOTAL STOCK COMPARISON
+total_safety_stock_segmented = segmentation["safety_stock"].sum()
+total_safety_stock_flat = segmentation["flat_safety_stock"].sum()
+
+print(f"Total safety stock — segmented: {total_safety_stock_segmented:,.0f}")
+print(f"Total safety stock — flat:      {total_safety_stock_flat:,.0f}")
+print(f"Difference: {total_safety_stock_segmented - total_safety_stock_flat:,.0f} "
+      f"({(total_safety_stock_segmented/total_safety_stock_flat - 1)*100:+.1f}%)")
+
+# %%
+# VOLUME-WEIGHTED STOCKOUT RATE COMPARISON
+# Bring in each category's mean_demand from segmentation, to compute volume weights
+results_df = results_df.merge(
+    segmentation[["mean_demand"]],
+    left_on="Product_Category",
+    right_index=True
+)
+
+results_df["volume_share"] = results_df["mean_demand"] / results_df["mean_demand"].sum()
+
+weighted_stockout_segmented = (results_df["stockout_rate_segmented"] * results_df["volume_share"]).sum()
+weighted_stockout_flat = (results_df["stockout_rate_flat"] * results_df["volume_share"]).sum()
+
+print(f"Volume-weighted stockout rate — segmented: {weighted_stockout_segmented:.2%}")
+print(f"Volume-weighted stockout rate — flat:      {weighted_stockout_flat:.2%}")
+# %%
+# %%
+results_df.to_csv(project_root / "data" / "processed" / "monte_carlo_results.csv", index=False)
+print(f"Saved {len(results_df)} rows")
+# %%

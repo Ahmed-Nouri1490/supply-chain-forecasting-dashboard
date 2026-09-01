@@ -546,7 +546,40 @@ the 37.5-day lead time assumption in Phase 4):
 
 3. Replication loop + policy comparison - run both pieces thousands of times per category, under both segmented policy and a flat policy, and compare stockout rates vs. holding cost
 
+- Found out the stockout rate for segmented was higher on basically all category except AX,BX as this is expected since we prioritised the stocks that had the largest impact on demand which was AX
 
+1. Total stock held under each policy - holding cost side of the story
+
+2. Volume-weighting - a stockout on Category_019 matters far more than one on a category thats 3 units toatl (like category_027 which shows mean_demand values under 100 earlier) 
+
+this was calcualted by a weighted average so (rate_1 × weight_1) + (rate_2 × weight_2) + ... + (rate_33 × weight_33)
+
+
+### Phase 5 results: segmented vs flat inventory policy
+
+Ran a combined Monte Carlo simulation (10,000 trials per category, bootstrap
+demand × disruption model) comparing the ABC/XYZ-segmented safety stock policy
+against a flat policy (uniform Z=1.65 applied to every category).
+
+**Simple (unweighted) average across 33 categories:** segmented policy performs
+worse than flat on 32 of 33 categories — expected, since only the AX segment
+(Z=2.05) holds more safety stock than the flat baseline; every other segment's
+differentiated Z-score is below 1.65.
+
+**Volume-weighted result (the meaningful comparison):** weighting each
+category's stockout rate by its share of total demand — since Category_019
+alone accounts for ~82.6% of volume — the picture reverses:
+- Volume-weighted stockout rate: **13.63% (segmented) vs 15.95% (flat)**
+- Total safety stock held: **21,194,774 (segmented) vs 18,534,933 (flat)**,
+  a 14.4% increase
+
+**Interpretation:** the segmented policy trades ~14% more inventory investment
+for a ~2.3 percentage point reduction in stockout risk on a volume-weighted
+basis, concentrated almost entirely in protecting the AX category (Category_019),
+which dominates real business impact. On a category-count basis alone, the
+segmented policy looks worse; on a demand-weighted basis, it targets protection
+where it matters most — this distinction is the core justification for
+segmentation over a uniform policy.
 
 
 

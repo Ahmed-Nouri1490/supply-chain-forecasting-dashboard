@@ -10,7 +10,6 @@ segmentation = pd.read_csv(
 )
 
 segmentation.head()
-# %%
 
 # %%
 from sqlalchemy import create_engine
@@ -28,8 +27,9 @@ demand_stats.columns = ["mean_demand", "std_demand"]
 
 segmentation = segmentation.join(demand_stats)
 segmentation.head()
+
 # %%
-# %% ## AX = 0.98 , BX = 0.95, BY = 0.93, CX = 0.92, CY = 0.88, CZ = 0.85
+## AX = 0.98, BX = 0.95, BY = 0.93, CX = 0.92, CY = 0.88, CZ = 0.85
 z_lookup = {
     "AX": 2.05,
     "BX": 1.65,
@@ -41,21 +41,24 @@ z_lookup = {
 
 segmentation["Z"] = segmentation["ABC_XYZ"].map(z_lookup)
 segmentation
-# %%
+
 # %%
 lead_time_days = 37.5  # midpoint of your 30–45 day assumption
 lead_time_weeks = lead_time_days / 7
 
+# --- SEGMENTED POLICY: safety stock + reorder point ---
 segmentation["safety_stock"] = (
     segmentation["Z"] * segmentation["std_demand"] * (lead_time_weeks ** 0.5)
 )
 
-segmentation[["ABC_XYZ", "mean_demand", "std_demand", "Z", "safety_stock"]].sort_values("ABC_XYZ")
+segmentation["reorder_point"] = (
+    segmentation["mean_demand"] * lead_time_weeks + segmentation["safety_stock"]
+)
 
+segmentation[["ABC_XYZ", "mean_demand", "std_demand", "Z", "safety_stock", "reorder_point"]].sort_values("ABC_XYZ")
 
-#REORDER POINT CALCULATION
 # %%
-# %%
+# --- FLAT POLICY: safety stock + reorder point ---
 FLAT_Z = 1.65  # uniform ~95% service level, applied to every category regardless of segment
 
 segmentation["flat_safety_stock"] = (
@@ -67,13 +70,9 @@ segmentation["flat_reorder_point"] = (
 )
 
 segmentation[["ABC_XYZ", "reorder_point", "flat_reorder_point"]].sort_values("ABC_XYZ")
-segmentation["reorder_point"] = (
-    segmentation["mean_demand"] * lead_time_weeks + segmentation["safety_stock"]
-)
 
-segmentation[["ABC_XYZ", "mean_demand", "safety_stock", "reorder_point"]].sort_values("ABC_XYZ")
 # %%
-# %%
+# --- SAVE ---
 segmentation.to_csv(project_root / "data" / "processed" / "segmentation_with_policy.csv")
 print(f"Saved {len(segmentation)} rows")
 # %%
