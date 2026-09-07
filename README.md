@@ -148,7 +148,8 @@ segmentations rather than one combined score.
 Performed using `statsmodels.seasonal_decompose` (additive model, period=52)
 on aggregate weekly demand, 2012–2016.
 
-![Aggregate seasonal decomposition](report/images/seasonal_decomp_aggregate.png)
+*(Aggregate decomposition chart — pending re-export)*
+
 
 - **Trend:** demand rises steadily from 2012, peaks around 2014–2015, then
   declines through 2016.
@@ -350,6 +351,8 @@ proportionally with the demand level, which is what an additive (rather than
 multiplicative) model assumes. MAE: 2,933,655 units — a **16.7% reduction**
 in forecast error versus the naive baseline.
 
+![2016 demand forecast: actual vs naive vs Holt-Winters](report/images/holt_winters_vs_naive.png)
+
 **Interpretation:** the improvement confirms the trend and seasonality
 identified in Phase 3 are genuine, exploitable patterns — a model built to
 use them meaningfully outperforms one that ignores them. The improvement is
@@ -494,6 +497,7 @@ responsible for over four-fifths of total demand. This is the core
 justification for a segmented policy over a uniform one — not "more
 inventory everywhere," but inventory allocated deliberately by consequence,
 not by category count.
+
 
 ## Phase 6 — Power BI Dashboard
 
